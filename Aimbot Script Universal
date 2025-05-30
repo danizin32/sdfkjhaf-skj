@@ -103,11 +103,13 @@ end
 
 minimizarBotao.MouseButton1Click:Connect(toggleMinimizar)
 
--- Arrastar a interface corretamente
+-- ✅ Arrastar funcional em PC e mobile
 local dragging = false
-local dragStart, startPos
+local dragInput
+local dragStart
+local startPos
 
-local function updateInput(input)
+local function update(input)
 	local delta = input.Position - dragStart
 	Frame.Position = UDim2.new(
 		startPos.X.Scale,
@@ -115,12 +117,11 @@ local function updateInput(input)
 		startPos.Y.Scale,
 		startPos.Y.Offset + delta.Y
 	)
-	-- Atualiza a posição do botão de minimizar junto
 	minimizarBotao.Position = UDim2.new(0, Frame.Position.X.Offset + Frame.Size.X.Offset + 10, 0, Frame.Position.Y.Offset)
 end
 
 Titulo.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		dragging = true
 		dragStart = input.Position
 		startPos = Frame.Position
@@ -133,9 +134,15 @@ Titulo.InputBegan:Connect(function(input)
 	end
 end)
 
+Titulo.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
 UserInputService.InputChanged:Connect(function(input)
-	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-		updateInput(input)
+	if input == dragInput and dragging then
+		update(input)
 	end
 end)
 
