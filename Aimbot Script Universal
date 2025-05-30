@@ -27,7 +27,7 @@ Frame.ClipsDescendants = true
 -- Título
 local Titulo = Instance.new("TextLabel", Frame)
 Titulo.Size = UDim2.new(1, 0, 0, 30)
-Titulo.Text = "Aimbot Script - Universal"
+Titulo.Text = "Aimbot Script - Prison Life"
 Titulo.TextColor3 = Color3.fromRGB(255, 0, 0)
 Titulo.BackgroundColor3 = Color3.fromRGB(10, 0, 0)
 Titulo.BorderColor3 = Color3.fromRGB(255, 0, 0)
