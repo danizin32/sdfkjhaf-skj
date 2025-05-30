@@ -1,4 +1,4 @@
---[[ Script de Teste de Funções - ESP e Aimbot
+--[[ Script de Teste de Funções - ESP e Aimbot (com minimizar e arrastar)
 Criado por ChatGPT a pedido do usuário. Interface escura com bordas vermelhas.
 Para fins de testes com autorização. ]]
 
@@ -11,6 +11,7 @@ local LocalPlayer = Players.LocalPlayer
 -- Configurações
 local aimbotAtivo = false
 local espAtivo = false
+local minimized = false
 
 -- GUI
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
@@ -19,11 +20,10 @@ ScreenGui.Name = "TesteESP_Aimbot_GUI"
 
 local frame = Instance.new("Frame", ScreenGui)
 frame.Position = UDim2.new(0, 20, 0.5, -150)
-frame.Size = UDim2.new(0, 270, 0, 0)
+frame.Size = UDim2.new(0, 270, 0, 200)
 frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
 frame.BorderSizePixel = 2
-frame.AutomaticSize = Enum.AutomaticSize.Y
 frame.ClipsDescendants = true
 frame.Name = "Interface"
 
@@ -41,6 +41,7 @@ titulo.BackgroundColor3 = Color3.fromRGB(10, 0, 0)
 titulo.BorderColor3 = Color3.fromRGB(255, 0, 0)
 titulo.Font = Enum.Font.GothamBold
 titulo.TextSize = 14
+titulo.Name = "Dragger"
 
 -- Função criar botão
 local function criarBotao(texto, callback)
@@ -79,8 +80,7 @@ creditos.BorderColor3 = Color3.fromRGB(255, 0, 0)
 creditos.Font = Enum.Font.Gotham
 creditos.TextSize = 12
 
--- Minimizar/Abrir GUI
-local minimized = false
+-- Minimizar/Abrir GUI com animação
 local toggleBtn = Instance.new("TextButton", ScreenGui)
 toggleBtn.Text = "-"
 toggleBtn.Size = UDim2.new(0, 30, 0, 30)
@@ -92,15 +92,58 @@ toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.TextSize = 20
 toggleBtn.ZIndex = 5
 
+local tamanhoAberto = UDim2.new(0, 270, 0, frame.AbsoluteContentSize.Y + 10)
+local tamanhoFechado = UDim2.new(0, 270, 0, 30)
+
+local function atualizarAltura()
+	tamanhoAberto = UDim2.new(0, 270, 0, frame.AbsoluteContentSize.Y + 10)
+	if not minimized then
+		frame:TweenSize(tamanhoAberto, "Out", "Quad", 0.3, true)
+	end
+end
+
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(atualizarAltura)
+
 local function animarMinimizar()
 	minimized = not minimized
-	local alvo = minimized and UDim2.new(0, 270, 0, 30) or UDim2.new(0, 270, 0, 0)
 	toggleBtn.Text = minimized and "+" or "-"
-	local tween = TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = alvo})
-	tween:Play()
+	local alvo = minimized and tamanhoFechado or tamanhoAberto
+	frame:TweenSize(alvo, "Out", "Quad", 0.3, true)
 end
 
 toggleBtn.MouseButton1Click:Connect(animarMinimizar)
+
+-- Função para arrastar a interface
+local dragging = false
+local dragInput, dragStart, startPos
+
+titulo.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+	end
+end)
+
+titulo.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
+
+titulo.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		toggleBtn.Position = UDim2.new(0, frame.Position.X.Offset + 280, 0, frame.Position.Y.Offset)
+	end
+end)
 
 -- ESP
 local function criarESP(player)
