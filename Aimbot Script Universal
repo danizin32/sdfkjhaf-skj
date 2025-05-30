@@ -1,6 +1,4 @@
---[[ Script de Teste com Interface e ESP (Team Check)
-Feito por ChatGPT com permissão para testes de detecção.
-]]
+-- SE INSCREVAM NO CANAL GALERA!
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -197,7 +195,7 @@ end)
 local credit = Instance.new("TextLabel", contentHolder)
 credit.Size = UDim2.new(1, 0, 0, 30)
 credit.Position = UDim2.new(0, 0, 1, -30)
-credit.Text = "Script feito por ChatGPT - Uso autorizado"
+credit.Text = "By Mccria32"
 credit.TextColor3 = Color3.fromRGB(255, 0, 0)
 credit.BackgroundTransparency = 1
 credit.TextScaled = true
