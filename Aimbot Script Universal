@@ -1,0 +1,32 @@
+-- CONFIGURAÇÃO LOCAL
+local config = {
+    esp = true,
+    aimbot = true,
+    fovSize = 100
+}
+
+-- FUNÇÃO PARA SALVAR CONFIGURAÇÕES
+local HttpService = game:GetService("HttpService")
+local function saveConfig()
+    if writefile then
+        writefile("pl_config.json", HttpService:JSONEncode(config))
+    end
+end
+
+local function loadConfig()
+    if readfile and isfile and isfile("pl_config.json") then
+        local data = HttpService:JSONDecode(readfile("pl_config.json"))
+        for k, v in pairs(data) do
+            config[k] = v
+        end
+    end
+end
+loadConfig()
+
+-- UI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "PrisonLifeMenu"
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local frame = Instance.new("Frame", ScreenGui)
+frame.Size = UDim2.new(0, 260, 0, 370)
