@@ -1,13 +1,12 @@
--- Serviços
+-- SERVIÇOS
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
--- Variáveis
+-- VARIÁVEIS
 local AimbotEnabled = false
 local ESPEnabled = false
 local FOV = 100
@@ -16,34 +15,35 @@ local TeamCheck = true
 
 -- GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "TesteGUI"
+gui.Name = "AimbotGUI"
 gui.ResetOnSpawn = false
 
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 250, 0, 350)
+main.Size = UDim2.new(0, 250, 0, 360)
 main.Position = UDim2.new(0, 20, 0.3, 0)
-main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+main.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+main.BorderColor3 = Color3.fromRGB(0, 120, 255)
 main.BorderSizePixel = 2
-main.BorderColor3 = Color3.fromRGB(255, 0, 0)
 main.Active = true
 main.Draggable = true
 main.Parent = gui
 
--- Minimizar
+-- BOTÃO MINIMIZAR
 local minimized = false
 local minBtn = Instance.new("TextButton")
-minBtn.Size = UDim2.new(0, 20, 0, 20)
-minBtn.Position = UDim2.new(1, -25, 0, 5)
+minBtn.Size = UDim2.new(0, 25, 0, 25)
+minBtn.Position = UDim2.new(1, -30, 0, 5)
 minBtn.Text = "-"
-minBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
-minBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+minBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 minBtn.BorderSizePixel = 0
 minBtn.Parent = main
 
+-- CONTEÚDO
 local content = Instance.new("Frame")
 content.Name = "Content"
-content.Size = UDim2.new(1, 0, 1, -30)
-content.Position = UDim2.new(0, 0, 0, 30)
+content.Size = UDim2.new(1, 0, 1, -35)
+content.Position = UDim2.new(0, 0, 0, 35)
 content.BackgroundTransparency = 1
 content.Visible = true
 content.Parent = main
@@ -53,21 +53,21 @@ layout.Padding = UDim.new(0, 5)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 layout.Parent = content
 
--- Minimizar com animação
+-- ANIMAÇÃO MINIMIZAR
 minBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
-	local targetSize = minimized and UDim2.new(0, 250, 0, 30) or UDim2.new(0, 250, 0, 350)
+	local targetSize = minimized and UDim2.new(0, 250, 0, 35) or UDim2.new(0, 250, 0, 360)
 	TweenService:Create(main, TweenInfo.new(0.3), {Size = targetSize}):Play()
 	content.Visible = not minimized
 end)
 
--- Criar botão
+-- CRIAR BOTÃO
 local function createButton(text, callback)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -20, 0, 35)
 	btn.Text = text
-	btn.BackgroundColor3 = Color3.fromRGB(30, 60, 100)
-	btn.BorderColor3 = Color3.fromRGB(255, 0, 0)
+	btn.BackgroundColor3 = Color3.fromRGB(0, 90, 180)
+	btn.BorderColor3 = Color3.fromRGB(255, 255, 255)
 	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	btn.AutoButtonColor = false
 	btn.BorderSizePixel = 1
@@ -76,17 +76,16 @@ local function createButton(text, callback)
 	btn.MouseButton1Click:Connect(function()
 		local state = callback()
 		if typeof(state) == "boolean" then
-			btn.BackgroundColor3 = state and Color3.fromRGB(70, 130, 180) or Color3.fromRGB(30, 60, 100)
+			btn.BackgroundColor3 = state and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(0, 90, 180)
 		end
 	end)
 end
 
 -- ESP
 local drawings = {}
-
 local function clearESP()
-	for _, v in pairs(drawings) do
-		if v.Box then v.Box:Remove() end
+	for _, d in pairs(drawings) do
+		if d.Box then d.Box:Remove() end
 	end
 	table.clear(drawings)
 end
@@ -94,22 +93,21 @@ end
 local function updateESP()
 	if not ESPEnabled then clearESP() return end
 
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			if TeamCheck and player.Team == LocalPlayer.Team then
-				if drawings[player] then drawings[player].Box.Visible = false end
-			else
-				local hrp = player.Character.HumanoidRootPart
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			if not TeamCheck or p.Team ~= LocalPlayer.Team then
+				local hrp = p.Character.HumanoidRootPart
 				local pos, onscreen = Camera:WorldToViewportPoint(hrp.Position)
-				if not drawings[player] then
+
+				if not drawings[p] then
 					local box = Drawing.new("Square")
-					box.Thickness = 1
 					box.Color = Color3.fromRGB(255, 0, 0)
+					box.Thickness = 1
 					box.Filled = false
-					drawings[player] = {Box = box}
+					drawings[p] = {Box = box}
 				end
 
-				local box = drawings[player].Box
+				local box = drawings[p].Box
 				if onscreen then
 					box.Visible = true
 					box.Size = Vector2.new(60, 80)
@@ -122,19 +120,18 @@ local function updateESP()
 	end
 end
 
--- Aimbot
+-- AIMBOT
 local function getClosestEnemy()
-	local closest = nil
-	local shortest = math.huge
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(AimPart) then
-			if not TeamCheck or player.Team ~= LocalPlayer.Team then
-				local pos, visible = Camera:WorldToViewportPoint(player.Character[AimPart].Position)
+	local closest, shortest = nil, math.huge
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild(AimPart) then
+			if not TeamCheck or p.Team ~= LocalPlayer.Team then
+				local pos, visible = Camera:WorldToViewportPoint(p.Character[AimPart].Position)
 				if visible then
 					local dist = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude
 					if dist < shortest and dist <= FOV then
 						shortest = dist
-						closest = player
+						closest = p
 					end
 				end
 			end
@@ -143,14 +140,15 @@ local function getClosestEnemy()
 	return closest
 end
 
--- FOV Circle
+-- FOV CIRCLE
 local fovCircle = Drawing.new("Circle")
-fovCircle.Color = Color3.fromRGB(255, 0, 0)
+fovCircle.Color = Color3.fromRGB(0, 120, 255)
 fovCircle.Thickness = 1
 fovCircle.Radius = FOV
 fovCircle.Filled = false
 fovCircle.Visible = true
 
+-- LOOP PRINCIPAL
 RunService.RenderStepped:Connect(function()
 	fovCircle.Position = UserInputService:GetMouseLocation()
 	updateESP()
@@ -158,13 +156,13 @@ RunService.RenderStepped:Connect(function()
 	if AimbotEnabled then
 		local target = getClosestEnemy()
 		if target and target.Character and target.Character:FindFirstChild(AimPart) then
-			local head = target.Character[AimPart].Position
-			Camera.CFrame = CFrame.new(Camera.CFrame.Position, head)
+			local headPos = target.Character[AimPart].Position
+			Camera.CFrame = CFrame.new(Camera.CFrame.Position, headPos)
 		end
 	end
 end)
 
--- Botões
+-- BOTÕES
 createButton("Ativar ESP", function()
 	ESPEnabled = not ESPEnabled
 	return ESPEnabled
@@ -192,11 +190,11 @@ createButton("Fechar Interface", function()
 	return false
 end)
 
--- Créditos
+-- CRÉDITOS
 local credit = Instance.new("TextLabel")
 credit.Size = UDim2.new(1, -20, 0, 30)
-credit.Text = "Feito por ChatGPT - Teste Autorizado"
-credit.TextColor3 = Color3.fromRGB(255, 0, 0)
+credit.Text = "Feito com OpenAI - Para testes autorizados"
+credit.TextColor3 = Color3.fromRGB(200, 200, 200)
 credit.BackgroundTransparency = 1
 credit.TextScaled = true
 credit.Parent = content
