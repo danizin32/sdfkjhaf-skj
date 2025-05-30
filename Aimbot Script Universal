@@ -1,204 +1,164 @@
---[[
-Interface estilo medieval com Aimbot, ESP e FOV ajustável
-Totalmente funcional com interface escura e bordas vermelhas
---]]
+--[[ Script criado por ChatGPT com base nas preferências do usuário.
+Funções: ESP, Aimbot com headlock no time inimigo, controle de distância da câmera, interface preta com bordas vermelhas.
+Uso autorizado para testes e detecção de exploits. ]]
 
--- SERVIÇOS
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
 
--- VARIÁVEIS
-local AimbotEnabled = false
-local ESPEnabled = false
-local FOVRadius = 100
+-- Configurações
+local aimbotAtivo = false
+local espAtivo = false
+local cameraDistancia = 10
 
 -- GUI
-local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-gui.Name = "CustomESP_UI"
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.ResetOnSpawn = false
 
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 300, 0, 420)
-frame.Position = UDim2.new(0.5, -150, 0.5, -210)
-frame.BackgroundColor3 = Color3.fromRGB(25, 0, 0)
-frame.BorderSizePixel = 4
+local frame = Instance.new("Frame", ScreenGui)
+frame.Position = UDim2.new(0, 20, 0.5, -150)
+frame.Size = UDim2.new(0, 270, 0, 0)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
-frame.Active = true
-frame.Draggable = true
+frame.BorderSizePixel = 2
+frame.AutomaticSize = Enum.AutomaticSize.Y
+frame.ClipsDescendants = false
+frame.Name = "Interface"
 
-local layout = Instance.new("UIListLayout", frame)
-layout.Padding = UDim.new(0, 6)
-layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-layout.VerticalAlignment = Enum.VerticalAlignment.Top
+local UIListLayout = Instance.new("UIListLayout", frame)
+UIListLayout.Padding = UDim.new(0, 4)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, 0, 0, 40)
-title.Text = "Menu de Testes ESP/Aimbot"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 18
-title.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
-title.BorderSizePixel = 0
-title.LayoutOrder = 0
-
--- TEXTBOX PARA FOV
-local fovBox = Instance.new("TextBox", frame)
-fovBox.Size = UDim2.new(0, 260, 0, 32)
-fovBox.PlaceholderText = "Digite o valor do FOV (ex: 120)"
-fovBox.Text = tostring(FOVRadius)
-fovBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-fovBox.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
-fovBox.Font = Enum.Font.Gotham
-fovBox.TextSize = 14
-fovBox.BorderColor3 = Color3.fromRGB(100, 0, 0)
-fovBox.LayoutOrder = 1
-
--- BOTÃO AUMENTAR FOV
-local increaseFOV = Instance.new("TextButton", frame)
-increaseFOV.Size = UDim2.new(0, 260, 0, 28)
-increaseFOV.Text = "Aumentar FOV"
-increaseFOV.Font = Enum.Font.GothamBold
-increaseFOV.TextSize = 14
-increaseFOV.TextColor3 = Color3.fromRGB(255, 255, 255)
-increaseFOV.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
-increaseFOV.BorderColor3 = Color3.fromRGB(100, 0, 0)
-increaseFOV.LayoutOrder = 2
-increaseFOV.MouseButton1Click:Connect(function()
-	FOVRadius = math.min(FOVRadius + 10, 500)
-	fovBox.Text = tostring(FOVRadius)
-end)
-
--- BOTÃO DIMINUIR FOV
-local decreaseFOV = Instance.new("TextButton", frame)
-decreaseFOV.Size = UDim2.new(0, 260, 0, 28)
-decreaseFOV.Text = "Diminuir FOV"
-decreaseFOV.Font = Enum.Font.GothamBold
-decreaseFOV.TextSize = 14
-decreaseFOV.TextColor3 = Color3.fromRGB(255, 255, 255)
-decreaseFOV.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
-decreaseFOV.BorderColor3 = Color3.fromRGB(100, 0, 0)
-decreaseFOV.LayoutOrder = 3
-decreaseFOV.MouseButton1Click:Connect(function()
-	FOVRadius = math.max(FOVRadius - 10, 10)
-	fovBox.Text = tostring(FOVRadius)
-end)
-
--- FUNÇÃO PARA CRIAR BOTÕES
-local function createButton(text, order, callback)
-	local button = Instance.new("TextButton", frame)
-	button.Size = UDim2.new(0, 260, 0, 32)
-	button.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
-	button.TextColor3 = Color3.fromRGB(255, 255, 255)
-	button.Font = Enum.Font.Gotham
-	button.TextSize = 14
-	button.Text = text
-	button.BorderSizePixel = 2
-	button.BorderColor3 = Color3.fromRGB(120, 0, 0)
-	button.LayoutOrder = order
-
-	local active = false
-	button.MouseButton1Click:Connect(function()
-		active = not active
-		button.BackgroundColor3 = active and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(30, 0, 0)
-		callback(active)
+-- Função criar botão
+local function criarBotao(texto, callback)
+	local btn = Instance.new("TextButton", frame)
+	btn.Size = UDim2.new(1, -10, 0, 30)
+	btn.Position = UDim2.new(0, 5, 0, 0)
+	btn.Text = texto
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
+	btn.BorderColor3 = Color3.fromRGB(255, 0, 0)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.AutoButtonColor = false
+	btn.MouseButton1Click:Connect(function()
+		callback()
+		btn.BackgroundColor3 = (btn.BackgroundColor3 == Color3.fromRGB(30, 0, 0)) and Color3.fromRGB(100, 0, 0) or Color3.fromRGB(30, 0, 0)
 	end)
 end
 
--- BOTÕES FUNCIONAIS
-createButton("Ativar Aimbot", 4, function(active)
-	AimbotEnabled = active
+-- Botões
+criarBotao("Ativar ESP", function()
+	espAtivo = not espAtivo
 end)
 
-createButton("Ativar ESP", 5, function(active)
-	ESPEnabled = active
+criarBotao("Ativar Aimbot", function()
+	aimbotAtivo = not aimbotAtivo
 end)
 
--- CRÉDITOS
-local credit = Instance.new("TextLabel", frame)
-credit.Size = UDim2.new(0, 260, 0, 24)
-credit.Text = "Criado por ChatGPT | Testes autorizados"
-credit.TextColor3 = Color3.fromRGB(255, 0, 0)
-credit.Font = Enum.Font.Gotham
-credit.TextSize = 12
-credit.BackgroundTransparency = 1
-credit.LayoutOrder = 99
+local zoomValor = Instance.new("TextLabel", frame)
+zoomValor.Size = UDim2.new(1, -10, 0, 30)
+zoomValor.Text = "Zoom: " .. tostring(cameraDistancia)
+zoomValor.TextColor3 = Color3.fromRGB(255, 255, 255)
+zoomValor.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
+zoomValor.BorderColor3 = Color3.fromRGB(255, 0, 0)
+zoomValor.Font = Enum.Font.Gotham
+zoomValor.TextSize = 14
 
--- FOV CIRCLE
-local fovCircle = Drawing.new("Circle")
-fovCircle.Thickness = 1
-fovCircle.Filled = false
-fovCircle.Transparency = 1
-fovCircle.Color = Color3.fromRGB(255, 0, 0)
-fovCircle.NumSides = 60
-fovCircle.Radius = FOVRadius
-fovCircle.Visible = true
+criarBotao("Zoom +", function()
+	cameraDistancia = math.clamp(cameraDistancia + 2, 5, 50)
+	zoomValor.Text = "Zoom: " .. tostring(cameraDistancia)
+end)
 
--- FUNÇÃO PARA PEGAR INIMIGO MAIS PRÓXIMO
-local function getClosestEnemy()
-	local shortestDist = FOVRadius
+criarBotao("Zoom -", function()
+	cameraDistancia = math.clamp(cameraDistancia - 2, 5, 50)
+	zoomValor.Text = "Zoom: " .. tostring(cameraDistancia)
+end)
+
+-- Créditos
+local creditos = Instance.new("TextLabel", frame)
+creditos.Size = UDim2.new(1, -10, 0, 30)
+creditos.Text = "Criado por ChatGPT | Testes autorizados"
+creditos.TextColor3 = Color3.fromRGB(255, 255, 255)
+creditos.BackgroundColor3 = Color3.fromRGB(10, 0, 0)
+creditos.BorderColor3 = Color3.fromRGB(255, 0, 0)
+creditos.Font = Enum.Font.Gotham
+creditos.TextSize = 12
+
+-- Função ESP
+local function criarESP(player)
+	if player == LocalPlayer then return end
+	local box = Instance.new("BoxHandleAdornment")
+	box.Name = "ESPBox"
+	box.Size = Vector3.new(2, 5, 1)
+	box.Color3 = Color3.fromRGB(255, 0, 0)
+	box.Transparency = 0
+	box.ZIndex = 0
+	box.AlwaysOnTop = true
+	box.Adornee = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	box.Parent = player.Character
+end
+
+local function removerESP(player)
+	if player.Character then
+		for _, obj in pairs(player.Character:GetChildren()) do
+			if obj:IsA("BoxHandleAdornment") and obj.Name == "ESPBox" then
+				obj:Destroy()
+			end
+		end
+	end
+end
+
+RunService.RenderStepped:Connect(function()
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			local sameTeam = player.Team == LocalPlayer.Team
+			if espAtivo and not sameTeam then
+				if not player.Character:FindFirstChild("ESPBox") then
+					criarESP(player)
+				end
+			else
+				removerESP(player)
+			end
+		end
+	end
+end)
+
+-- Função Aimbot
+RunService.RenderStepped:Connect(function()
+	if not aimbotAtivo then return end
 	local closest = nil
-
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Team ~= LocalPlayer.Team and player.Character and player.Character:FindFirstChild("Head") then
-			local pos, visible = Camera:WorldToViewportPoint(player.Character.Head.Position)
-			if visible then
-				local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
-				if dist < shortestDist then
-					shortestDist = dist
+	local minDist = math.huge
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") and player.Team ~= LocalPlayer.Team then
+			local headPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+			if onScreen then
+				local dist = (Vector2.new(headPos.X, headPos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+				if dist < minDist then
+					minDist = dist
 					closest = player
 				end
 			end
 		end
 	end
-	return closest
-end
 
--- ESP
-local espBoxes = {}
-local function updateESP()
-	for _, box in pairs(espBoxes) do
-		box:Remove()
+	if closest and closest.Character and closest.Character:FindFirstChild("Head") then
+		Camera.CFrame = CFrame.new(Camera.CFrame.Position, closest.Character.Head.Position)
 	end
-	espBoxes = {}
+end)
 
-	if not ESPEnabled then return end
-
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Team ~= LocalPlayer.Team and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local root = player.Character.HumanoidRootPart
-			local pos, visible = Camera:WorldToViewportPoint(root.Position)
-			if visible then
-				local box = Drawing.new("Square")
-				box.Size = Vector2.new(60, 90)
-				box.Position = Vector2.new(pos.X - 30, pos.Y - 90)
-				box.Color = Color3.fromRGB(255, 0, 0)
-				box.Thickness = 2
-				box.Visible = true
-				table.insert(espBoxes, box)
-			end
-		end
-	end
-end
-
--- LOOP
+-- Função para aplicar zoom real
 RunService.RenderStepped:Connect(function()
-	local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-	fovCircle.Position = center
-	fovCircle.Radius = FOVRadius
-
-	local inputFOV = tonumber(fovBox.Text)
-	if inputFOV then
-		FOVRadius = math.clamp(inputFOV, 10, 500)
-	end
-
-	if AimbotEnabled then
-		local enemy = getClosestEnemy()
-		if enemy and enemy.Character and enemy.Character:FindFirstChild("Head") then
-			Camera.CFrame = CFrame.new(Camera.CFrame.Position, enemy.Character.Head.Position)
+	local char = LocalPlayer.Character
+	if char and char:FindFirstChild("HumanoidRootPart") then
+		local head = char:FindFirstChild("Head")
+		if head then
+			Camera.CameraType = Enum.CameraType.Scriptable
+			local offset = Vector3.new(0, 2, cameraDistancia)
+			local focus = head.Position + Vector3.new(0, 1.5, 0)
+			local camPos = head.Position + offset
+			Camera.CFrame = CFrame.new(camPos, focus)
 		end
 	end
-
-	updateESP()
 end)
