@@ -27,7 +27,7 @@ Frame.ClipsDescendants = true
 -- Título
 local Titulo = Instance.new("TextLabel", Frame)
 Titulo.Size = UDim2.new(1, 0, 0, 30)
-Titulo.Text = "🔴 TESTE DE SCRIPT - CHATGPT"
+Titulo.Text = "Aimbot Script - Universal"
 Titulo.TextColor3 = Color3.fromRGB(255, 0, 0)
 Titulo.BackgroundColor3 = Color3.fromRGB(10, 0, 0)
 Titulo.BorderColor3 = Color3.fromRGB(255, 0, 0)
@@ -74,7 +74,7 @@ end)
 
 local creditos = Instance.new("TextLabel", Container)
 creditos.Size = UDim2.new(1, -10, 0, 30)
-creditos.Text = "Criado por ChatGPT | Uso autorizado"
+creditos.Text = "By Mccria32"
 creditos.TextColor3 = Color3.fromRGB(255, 255, 255)
 creditos.BackgroundColor3 = Color3.fromRGB(10, 0, 0)
 creditos.BorderColor3 = Color3.fromRGB(255, 0, 0)
