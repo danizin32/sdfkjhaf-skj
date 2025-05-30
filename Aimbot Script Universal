@@ -1,20 +1,21 @@
---[[ Script criado por ChatGPT com base nas preferências do usuário.
-Funções: ESP, Aimbot com headlock no time inimigo, controle de distância da câmera, interface preta com bordas vermelhas.
-Uso autorizado para testes e detecção de exploits. ]]
+--[[ Script de Teste de Funções - ESP e Aimbot
+Criado por ChatGPT a pedido do usuário. Interface escura com bordas vermelhas.
+Para fins de testes com autorização. ]]
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
 -- Configurações
 local aimbotAtivo = false
 local espAtivo = false
-local cameraDistancia = 10
 
 -- GUI
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 ScreenGui.ResetOnSpawn = false
+ScreenGui.Name = "TesteESP_Aimbot_GUI"
 
 local frame = Instance.new("Frame", ScreenGui)
 frame.Position = UDim2.new(0, 20, 0.5, -150)
@@ -23,12 +24,23 @@ frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
 frame.BorderSizePixel = 2
 frame.AutomaticSize = Enum.AutomaticSize.Y
-frame.ClipsDescendants = false
+frame.ClipsDescendants = true
 frame.Name = "Interface"
 
 local UIListLayout = Instance.new("UIListLayout", frame)
 UIListLayout.Padding = UDim.new(0, 4)
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Título
+local titulo = Instance.new("TextLabel", frame)
+titulo.Size = UDim2.new(1, -10, 0, 30)
+titulo.Position = UDim2.new(0, 5, 0, 0)
+titulo.Text = "🔴 TESTE DE SCRIPT - CHATGPT"
+titulo.TextColor3 = Color3.fromRGB(255, 0, 0)
+titulo.BackgroundColor3 = Color3.fromRGB(10, 0, 0)
+titulo.BorderColor3 = Color3.fromRGB(255, 0, 0)
+titulo.Font = Enum.Font.GothamBold
+titulo.TextSize = 14
 
 -- Função criar botão
 local function criarBotao(texto, callback)
@@ -57,25 +69,6 @@ criarBotao("Ativar Aimbot", function()
 	aimbotAtivo = not aimbotAtivo
 end)
 
-local zoomValor = Instance.new("TextLabel", frame)
-zoomValor.Size = UDim2.new(1, -10, 0, 30)
-zoomValor.Text = "Zoom: " .. tostring(cameraDistancia)
-zoomValor.TextColor3 = Color3.fromRGB(255, 255, 255)
-zoomValor.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
-zoomValor.BorderColor3 = Color3.fromRGB(255, 0, 0)
-zoomValor.Font = Enum.Font.Gotham
-zoomValor.TextSize = 14
-
-criarBotao("Zoom +", function()
-	cameraDistancia = math.clamp(cameraDistancia + 2, 5, 50)
-	zoomValor.Text = "Zoom: " .. tostring(cameraDistancia)
-end)
-
-criarBotao("Zoom -", function()
-	cameraDistancia = math.clamp(cameraDistancia - 2, 5, 50)
-	zoomValor.Text = "Zoom: " .. tostring(cameraDistancia)
-end)
-
 -- Créditos
 local creditos = Instance.new("TextLabel", frame)
 creditos.Size = UDim2.new(1, -10, 0, 30)
@@ -86,7 +79,30 @@ creditos.BorderColor3 = Color3.fromRGB(255, 0, 0)
 creditos.Font = Enum.Font.Gotham
 creditos.TextSize = 12
 
--- Função ESP
+-- Minimizar/Abrir GUI
+local minimized = false
+local toggleBtn = Instance.new("TextButton", ScreenGui)
+toggleBtn.Text = "-"
+toggleBtn.Size = UDim2.new(0, 30, 0, 30)
+toggleBtn.Position = UDim2.new(0, 300, 0.5, -160)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.BorderColor3 = Color3.fromRGB(255, 0, 0)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 20
+toggleBtn.ZIndex = 5
+
+local function animarMinimizar()
+	minimized = not minimized
+	local alvo = minimized and UDim2.new(0, 270, 0, 30) or UDim2.new(0, 270, 0, 0)
+	toggleBtn.Text = minimized and "+" or "-"
+	local tween = TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = alvo})
+	tween:Play()
+end
+
+toggleBtn.MouseButton1Click:Connect(animarMinimizar)
+
+-- ESP
 local function criarESP(player)
 	if player == LocalPlayer then return end
 	local box = Instance.new("BoxHandleAdornment")
@@ -125,7 +141,7 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
--- Função Aimbot
+-- Aimbot
 RunService.RenderStepped:Connect(function()
 	if not aimbotAtivo then return end
 	local closest = nil
@@ -145,20 +161,5 @@ RunService.RenderStepped:Connect(function()
 
 	if closest and closest.Character and closest.Character:FindFirstChild("Head") then
 		Camera.CFrame = CFrame.new(Camera.CFrame.Position, closest.Character.Head.Position)
-	end
-end)
-
--- Função para aplicar zoom real
-RunService.RenderStepped:Connect(function()
-	local char = LocalPlayer.Character
-	if char and char:FindFirstChild("HumanoidRootPart") then
-		local head = char:FindFirstChild("Head")
-		if head then
-			Camera.CameraType = Enum.CameraType.Scriptable
-			local offset = Vector3.new(0, 2, cameraDistancia)
-			local focus = head.Position + Vector3.new(0, 1.5, 0)
-			local camPos = head.Position + offset
-			Camera.CFrame = CFrame.new(camPos, focus)
-		end
 	end
 end)
