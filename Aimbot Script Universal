@@ -1,0 +1,216 @@
+--[[ Script: Aimbot + ESP + Interface Realista Azul
+     Jogo: Prison Life (apenas inimigos são alvo)
+     Executor: Mobile (Arceus X, Hydrogen)
+     Autor: Desenvolvido para testes autorizados
+--]]
+
+if not game:IsLoaded() then game.Loaded:Wait() end
+local Players, LocalPlayer, RunService = game:GetService("Players"), game:GetService("Players").LocalPlayer, game:GetService("RunService")
+
+-- Configuração Local
+local config = {
+    aimbot = false,
+    esp = false,
+    fovSize = 150
+}
+
+-- Função para salvar
+local function saveConfig()
+    if writefile then
+        writefile("aimconfig.json", game:GetService("HttpService"):JSONEncode(config))
+    end
+end
+
+-- Função para carregar
+if isfile and isfile("aimconfig.json") then
+    local content = readfile("aimconfig.json")
+    config = game:GetService("HttpService"):JSONDecode(content)
+end
+
+-- UI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "AimbotESP_UI"
+local dragging, dragInput, dragStart, startPos
+
+local mainFrame = Instance.new("Frame", ScreenGui)
+mainFrame.Size = UDim2.new(0, 280, 0, 60)
+mainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+mainFrame.BorderColor3 = Color3.fromRGB(0, 120, 255)
+mainFrame.BorderSizePixel = 2
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Name = "MainFrame"
+
+local UICorner = Instance.new("UICorner", mainFrame)
+UICorner.CornerRadius = UDim.new(0, 8)
+
+local title = Instance.new("TextLabel", mainFrame)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "Painel de Funções"
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.GothamBold
+title.TextScaled = true
+
+local toggleBtn = Instance.new("TextButton", mainFrame)
+toggleBtn.Size = UDim2.new(0, 30, 0, 30)
+toggleBtn.Position = UDim2.new(1, -35, 0, 5)
+toggleBtn.Text = "-"
+toggleBtn.TextColor3 = Color3.new(1,1,1)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextScaled = true
+toggleBtn.BackgroundColor3 = Color3.fromRGB(0,120,255)
+Instance.new("UICorner", toggleBtn)
+
+local container = Instance.new("Frame", mainFrame)
+container.BackgroundTransparency = 1
+container.Position = UDim2.new(0,0,0,35)
+container.Size = UDim2.new(1,0,1,-35)
+container.Name = "Container"
+
+local UIListLayout = Instance.new("UIListLayout", container)
+UIListLayout.Padding = UDim.new(0, 5)
+
+local function createToggle(name, setting, icon)
+    local btn = Instance.new("TextButton", container)
+    btn.Size = UDim2.new(0.9, 0, 0, 35)
+    btn.Position = UDim2.new(0.05, 0, 0, 0)
+    btn.BackgroundColor3 = config[setting] and Color3.fromRGB(0,120,255) or Color3.fromRGB(50,50,50)
+    btn.Text = icon .. "  " .. name .. ": " .. (config[setting] and "ON" or "OFF")
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextScaled = true
+    Instance.new("UICorner", btn)
+
+    btn.MouseButton1Click:Connect(function()
+        config[setting] = not config[setting]
+        btn.BackgroundColor3 = config[setting] and Color3.fromRGB(0,120,255) or Color3.fromRGB(50,50,50)
+        btn.Text = icon .. "  " .. name .. ": " .. (config[setting] and "ON" or "OFF")
+        saveConfig()
+    end)
+end
+
+createToggle("ESP", "esp", "[ESP]")
+createToggle("Aimbot", "aimbot", "[AIM]")
+
+-- FOV Slider
+local fovLabel = Instance.new("TextLabel", container)
+fovLabel.Size = UDim2.new(1, 0, 0, 30)
+fovLabel.BackgroundTransparency = 1
+fovLabel.TextColor3 = Color3.new(1,1,1)
+fovLabel.Font = Enum.Font.GothamBold
+fovLabel.TextScaled = true
+fovLabel.Text = "FOV: " .. config.fovSize
+
+local plus = Instance.new("TextButton", container)
+plus.Size = UDim2.new(0.45, 0, 0, 30)
+plus.Text = "+ Aumentar"
+plus.TextColor3 = Color3.new(1,1,1)
+plus.Font = Enum.Font.Gotham
+plus.BackgroundColor3 = Color3.fromRGB(0,120,255)
+Instance.new("UICorner", plus)
+
+local minus = plus:Clone()
+minus.Text = "- Diminuir"
+
+plus.MouseButton1Click:Connect(function()
+    config.fovSize += 20
+    fovLabel.Text = "FOV: " .. config.fovSize
+    saveConfig()
+end)
+
+minus.MouseButton1Click:Connect(function()
+    config.fovSize = math.max(20, config.fovSize - 20)
+    fovLabel.Text = "FOV: " .. config.fovSize
+    saveConfig()
+end)
+
+plus.Parent = container
+minus.Parent = container
+
+-- Créditos
+local credits = Instance.new("TextLabel", container)
+credits.Size = UDim2.new(1, 0, 0, 25)
+credits.BackgroundTransparency = 1
+credits.Text = "Feito para fins de teste e proteção."
+credits.TextColor3 = Color3.fromRGB(200, 200, 200)
+credits.Font = Enum.Font.Gotham
+credits.TextScaled = true
+
+-- Interface auto-resize
+RunService.RenderStepped:Connect(function()
+    local children = container:GetChildren()
+    local totalHeight = 0
+    for _, child in pairs(children) do
+        if child:IsA("GuiObject") then
+            totalHeight += child.AbsoluteSize.Y + 5
+        end
+    end
+    mainFrame.Size = UDim2.new(0, 280, 0, totalHeight + 40)
+end)
+
+-- Minimizar/Abrir animação
+local minimized = false
+toggleBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    for _, obj in pairs(container:GetChildren()) do
+        if obj:IsA("GuiObject") then
+            obj.Visible = not minimized
+        end
+    end
+    toggleBtn.Text = minimized and "+" or "-"
+end)
+
+-- FOV Circle
+local fovCircle = Drawing.new("Circle")
+fovCircle.Color = Color3.fromRGB(0,120,255)
+fovCircle.Thickness = 2
+fovCircle.NumSides = 60
+fovCircle.Filled = false
+fovCircle.Visible = true
+RunService.RenderStepped:Connect(function()
+    fovCircle.Radius = config.fovSize
+    fovCircle.Position = workspace.CurrentCamera.ViewportSize / 2
+    fovCircle.Visible = not minimized
+end)
+
+-- Aimbot + ESP funcional
+RunService.RenderStepped:Connect(function()
+    if not config.esp and not config.aimbot then return end
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local head = player.Character.Head
+            local isEnemy = player.Team ~= LocalPlayer.Team
+            local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(head.Position)
+            if config.esp and isEnemy then
+                -- Caixa (ESP simples com Box)
+                local box = Drawing.new("Square")
+                box.Color = player.TeamColor.Color
+                box.Size = Vector2.new(50, 50)
+                box.Position = Vector2.new(screenPos.X - 25, screenPos.Y - 50)
+                box.Thickness = 2
+                box.Visible = onScreen
+                game.Debris:AddItem(box, 0.05)
+
+                -- Nome e Distância
+                local label = Drawing.new("Text")
+                label.Text = player.Name .. " [" .. math.floor((head.Position - workspace.CurrentCamera.CFrame.Position).Magnitude) .. "m]"
+                label.Position = Vector2.new(screenPos.X - 40, screenPos.Y - 60)
+                label.Size = 14
+                label.Color = Color3.new(1,1,1)
+                label.Center = true
+                label.Visible = onScreen
+                game.Debris:AddItem(label, 0.05)
+            end
+            -- Aimbot
+            if config.aimbot and isEnemy then
+                local dist = (Vector2.new(screenPos.X, screenPos.Y) - workspace.CurrentCamera.ViewportSize/2).Magnitude
+                if dist < config.fovSize and onScreen then
+                    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, head.Position)
+                    break
+                end
+            end
+        end
+    end
+end)
